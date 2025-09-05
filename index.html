@@ -21,11 +21,57 @@
   <script>
     // List of states and their flag image filenames
     const states = [
-      { name: "Alabama", flag: "flags/alabama.png" },
-      { name: "Alaska", flag: "flags/alaska.png" },
-      // ...add all 50 states here, with correct filenames
-    ];
-
+  { name: "Alabama", flag: "flags/Alabama.png" },
+  { name: "Alaska", flag: "flags/Alaska.png" },
+  { name: "Arizona", flag: "flags/Arizona.png" },
+  { name: "Arkansas", flag: "flags/Arkansas.png" },
+  { name: "California", flag: "flags/California.png" },
+  { name: "Colorado", flag: "flags/Colorado.png" },
+  { name: "Connecticut", flag: "flags/Connecticut.png" },
+  { name: "Delaware", flag: "flags/Delaware.png" },
+  { name: "Florida", flag: "flags/Florida.png" },
+  { name: "Georgia", flag: "flags/Georgia.png" },
+  { name: "Hawaii", flag: "flags/Hawaii.png" },
+  { name: "Idaho", flag: "flags/Idaho.png" },
+  { name: "Illinois", flag: "flags/Illinois.png" },
+  { name: "Indiana", flag: "flags/Indiana.png" },
+  { name: "Iowa", flag: "flags/Iowa.png" },
+  { name: "Kansas", flag: "flags/Kansas.png" },
+  { name: "Kentucky", flag: "flags/kentucky.png" },
+  { name: "Louisiana", flag: "flags/louisiana.png" },
+  { name: "Maine", flag: "flags/maine.png" },
+  { name: "Maryland", flag: "flags/maryland.png" },
+  { name: "Massachusetts", flag: "flags/massachusetts.png" },
+  { name: "Michigan", flag: "flags/michigan.png" },
+  { name: "Minnesota", flag: "flags/minnesota.png" },
+  { name: "Mississippi", flag: "flags/mississippi.png" },
+  { name: "Missouri", flag: "flags/missouri.png" },
+  { name: "Montana", flag: "flags/montana.png" },
+  { name: "Nebraska", flag: "flags/nebraska.png" },
+  { name: "Nevada", flag: "flags/nevada.png" },
+  { name: "New Hampshire", flag: "flags/new_hampshire.png" },
+  { name: "New Jersey", flag: "flags/new_jersey.png" },
+  { name: "New Mexico", flag: "flags/new_mexico.png" },
+  { name: "New York", flag: "flags/new_york.png" },
+  { name: "North Carolina", flag: "flags/north_carolina.png" },
+  { name: "North Dakota", flag: "flags/north_dakota.png" },
+  { name: "Ohio", flag: "flags/ohio.png" },
+  { name: "Oklahoma", flag: "flags/oklahoma.png" },
+  { name: "Oregon", flag: "flags/oregon.png" },
+  { name: "Pennsylvania", flag: "flags/pennsylvania.png" },
+  { name: "Rhode Island", flag: "flags/rhode_island.png" },
+  { name: "South Carolina", flag: "flags/south_carolina.png" },
+  { name: "South Dakota", flag: "flags/south_dakota.png" },
+  { name: "Tennessee", flag: "flags/tennessee.png" },
+  { name: "Texas", flag: "flags/texas.png" },
+  { name: "Utah", flag: "flags/utah.png" },
+  { name: "Vermont", flag: "flags/vermont.png" },
+  { name: "Virginia", flag: "flags/virginia.png" },
+  { name: "Washington", flag: "flags/washington.png" },
+  { name: "West Virginia", flag: "flags/west_virginia.png" },
+  { name: "Wisconsin", flag: "flags/wisconsin.png" },
+  { name: "Wyoming", flag: "flags/wyoming.png" }
+];
     // Helper: load image and get average RGB
     function getAverageRGB(src) {
       return new Promise((resolve, reject) => {
