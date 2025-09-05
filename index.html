@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>State Flags RGB Clustering</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; }
+    #plot { width: 100vw; height: 60vh; }
+    .clusters { display: flex; justify-content: space-around; margin: 2em 0; }
+    .cluster { flex: 1; margin: 0 1em; }
+    .state-row { display: flex; align-items: center; margin-bottom: 0.5em; }
+    .flag-thumb { width: 32px; height: 20px; object-fit: contain; margin-right: 0.5em; border: 1px solid #ccc; }
+    h2 { text-align: center; }
+  </style>
+</head>
+<body>
+  <h2>State Flags: RGB Clustering</h2>
+  <div id="plot"></div>
+  <div class="clusters" id="clusters"></div>
+  <script>
+    // List of states and their flag image filenames
+    const states = [
+      { name: "Alabama", flag: "flags/alabama.png" },
+      { name: "Alaska", flag: "flags/alaska.png" },
+      // ...add all 50 states here, with correct filenames
+    ];
+
+    // Helper: load image and get average RGB
+    function getAverageRGB(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.src = src;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          const data = ctx.getImageData(0, 0, img.width, img.height).data;
+          let r = 0, g = 0, b = 0, count = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            r += data[i];
+            g += data[i+1];
+            b += data[i+2];
+            count++;
+          }
+          resolve([r/count, g/count, b/count]);
+        };
+        img.onerror = reject;
+      });
+    }
+
+    // Simple KMeans implementation for 4 clusters
+    function kmeans(data, k = 4, maxIter = 100) {
+      // Randomly initialize centroids
+      let centroids = [];
+      for (let i = 0; i < k; i++) {
+        centroids.push(data[Math.floor(Math.random() * data.length)].rgb.slice());
+      }
+      let assignments = new Array(data.length).fill(0);
+      for (let iter = 0; iter < maxIter; iter++) {
+        // Assign points
+        for (let i = 0; i < data.length; i++) {
+          let minDist = Infinity, minIdx = 0;
+          for (let j = 0; j < k; j++) {
+            let d = Math.hypot(
+              data[i].rgb[0] - centroids[j][0],
+              data[i].rgb[1] - centroids[j][1],
+              data[i].rgb[2] - centroids[j][2]
+            );
+            if (d < minDist) { minDist = d; minIdx = j; }
+          }
+          assignments[i] = minIdx;
+        }
+        // Update centroids
+        let sums = Array.from({length: k}, () => [0,0,0]);
+        let counts = Array(k).fill(0);
+        for (let i = 0; i < data.length; i++) {
+          let c = assignments[i];
+          sums[c][0] += data[i].rgb[0];
+          sums[c][1] += data[i].rgb[1];
+          sums[c][2] += data[i].rgb[2];
+          counts[c]++;
+        }
+        for (let j = 0; j < k; j++) {
+          if (counts[j] > 0) {
+            centroids[j] = sums[j].map(x => x / counts[j]);
+          }
+        }
+      }
+      return { assignments, centroids };
+    }
+
+    // Main: process all flags, then plot and render clusters
+    async function main() {
+      // Compute average RGB for each state
+      const stateData = [];
+      for (const state of states) {
+        try {
+          const rgb = await getAverageRGB(state.flag);
+          stateData.push({ ...state, rgb });
+        } catch {
+          stateData.push({ ...state, rgb: [128,128,128] }); // fallback gray
+        }
+      }
+      // Cluster
+      const { assignments, centroids } = kmeans(stateData, 4);
+      // 3D Plot
+      const traces = [];
+      for (let c = 0; c < 4; c++) {
+        const clusterPoints = stateData
+          .map((s, i) => ({...s, idx: i}))
+          .filter((_, i) => assignments[i] === c);
+        traces.push({
+          x: clusterPoints.map(s => s.rgb[0]),
+          y: clusterPoints.map(s => s.rgb[1]),
+          z: clusterPoints.map(s => s.rgb[2]),
+          mode: 'markers',
+          type: 'scatter3d',
+          name: `Cluster ${c+1}`,
+          marker: {
+            size: 8,
+            color: clusterPoints.map(s => `rgb(${s.rgb.map(Math.round).join(',')})`),
+            line: { width: 1, color: '#333' }
+          },
+          text: clusterPoints.map(s => s.name)
+        });
+        // Lines from points to centroid
+        traces.push({
+          x: clusterPoints.flatMap(s => [s.rgb[0], centroids[c][0], null]),
+          y: clusterPoints.flatMap(s => [s.rgb[1], centroids[c][1], null]),
+          z: clusterPoints.flatMap(s => [s.rgb[2], centroids[c][2], null]),
+          mode: 'lines',
+          type: 'scatter3d',
+          line: { color: 'rgba(0,0,0,0.2)', width: 2 },
+          showlegend: false,
+          hoverinfo: 'skip'
+        });
+      }
+      // Centroids
+      traces.push({
+        x: centroids.map(c => c[0]),
+        y: centroids.map(c => c[1]),
+        z: centroids.map(c => c[2]),
+        mode: 'markers',
+        type: 'scatter3d',
+        marker: { size: 16, color: 'black', symbol: 'diamond' },
+        name: 'Centroids'
+      });
+      Plotly.newPlot('plot', traces, {
+        margin: { l: 0, r: 0, b: 0, t: 0 },
+        scene: {
+          xaxis: { title: 'R', range: [0,255] },
+          yaxis: { title: 'G', range: [0,255] },
+          zaxis: { title: 'B', range: [0,255] }
+        }
+      }, {responsive: true});
+      // Cluster columns
+      const clustersDiv = document.getElementById('clusters');
+      clustersDiv.innerHTML = '';
+      for (let c = 0; c < 4; c++) {
+        const clusterStates = stateData
+          .map((s, i) => ({...s, idx: i}))
+          .filter((_, i) => assignments[i] === c)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        const col = document.createElement('div');
+        col.className = 'cluster';
+        col.innerHTML = `<h3>Cluster ${c+1}</h3>`;
+        for (const s of clusterStates) {
+          const row = document.createElement('div');
+          row.className = 'state-row';
+          row.innerHTML = `<img class="flag-thumb" src="${s.flag}" alt="${s.name} flag"><span>${s.name}</span>`;
+          col.appendChild(row);
+        }
+        clustersDiv.appendChild(col);
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>
